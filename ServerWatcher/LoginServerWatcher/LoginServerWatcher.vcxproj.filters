@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="lib">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="app">
+      <UniqueIdentifier>{dbe4cdf5-3ec2-4af7-9080-46144b095c86}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="LoginServer.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="maxminddb.c">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="data-pool.c">
+      <Filter>lib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LoginServer.h">
+      <Filter>app</Filter>
+    </ClInclude>
+    <ClInclude Include="maxminddb.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="maxminddb_config.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="maxminddb-compat-util.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="data-pool.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libmaxminddb.pc.in">
+      <Filter>lib</Filter>
+    </None>
+  </ItemGroup>
+</Project>

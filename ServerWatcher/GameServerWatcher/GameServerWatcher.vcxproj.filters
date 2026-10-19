@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="lib">
+      <UniqueIdentifier>{c6ccf262-c816-44c8-a767-6e98b7075b4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="app">
+      <UniqueIdentifier>{fcd8b121-8c81-4bf2-b5a7-3866c298f8b9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GameServer.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="maxminddb.c">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="data-pool.c">
+      <Filter>lib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameServer.h">
+      <Filter>app</Filter>
+    </ClInclude>
+    <ClInclude Include="maxminddb.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="maxminddb_config.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="data-pool.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
