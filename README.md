@@ -28,15 +28,15 @@ struct T_PACKET {
 ~~~
 
 ### How the Exploit Works:
-When a packet exceeds the standard MTU or buffer chunk, the protocol uses `extensionPacketCount` and `extensionPacketCurCount` to split data across multiple transmissions. However, the native v1911 server binary fails to validate the **cumulative size** of incoming extension chunks during reassembly.
+While a single packet cannot exceed the maximum size limit of **17,408 bytes** on its own, the protocol uses `extensionPacketCount` (total fragments) and `extensionPacketCurCount` (current fragment index) to split large data across multiple packets and combine them on the server.
 
-By spoofing `extensionPacketCount` and continuously streaming chunks where the cumulative byte count exceeds **17,408 bytes**, an attacker triggers a fatal **Buffer Overflow**, corrupting adjacent server memory and immediately crashing the `LoginServer` or `GameServer` process.
+**The Bypass:** An attacker bypasses the single-packet size limit by sending **multiple separate packets** where each individual packet is completely valid and under `17,408 bytes` (for example, sending two or three `10,000-byte` packets in sequence). Because the native v1911 server binary blindly combines these fragments using `extensionPacketCount` and `extensionPacketCurCount` without checking their **total combined size**, the reassembled data overflows the static `17,408-byte` destination buffer, corrupting server memory and instantly crashing `LoginServer` or `GameServer`.
 
 ### How ServerWatcher Fixes It:
 `ServerWatcher` sits transparently in front of the server binaries as a Reverse Proxy. It inspects the `T_PACKET` header of every incoming stream in real-time:
 1. Tracks stateful packet reassembly per client session (`m_totalExtensionSize`).
-2. Resets the counter when `extensionPacketCurCount == 1` and accumulates sizes across subsequent extension frames.
-3. **Instant Mitigation:** If the cumulative size of an extended packet sequence exceeds `17,408 bytes`, the proxy immediately terminates the socket before the malicious payload reaches the vulnerable server binary, logs the offense, and permanently blacklists the attacker's IP.
+2. Resets the counter when `extensionPacketCurCount == 1` and accumulates the byte count across all subsequent extension fragments.
+3. **Instant Mitigation:** The exact moment the combined size of an extended packet sequence exceeds `17,408 bytes`, the proxy immediately terminates the socket **before** the overflowing fragment reaches the vulnerable server binary, logs the offense, and permanently blacklists the attacker's IP.
 
 ---
 
@@ -67,18 +67,18 @@ The Visual Studio solution (`ServerWatcher.sln`) consists of two dedicated proxy
 
 ## ✨ Key Security & Engineering Features
 
-* **Stateful DPI (Deep Packet Inspection):**
+- **Stateful DPI (Deep Packet Inspection):**
   * **Magic Byte Enforcement:** Drops and bans any connection whose initial handshake packet is smaller than 8 bytes or does not start with `tStartByte == 241` (`0xF1`).
   * **Extension Overflow Guard:** Strictly enforces the `17,408-byte` ceiling across fragmented packets.
-* **Multi-Layered Flood & DDoS Mitigation:**
+- **Multi-Layered Flood & DDoS Mitigation:**
   * **Bandwidth & Packet Throttling:** Real-time per-client tracking of **PPS** (Packets Per Second) and **BPS** (Bytes Per Second). Clients exceeding `1.5x MAX_PPS` are automatically banned.
   * **Connection Rate Limiting:** Enforces minimum intervals between new connections from the same IP (`CONN_RATE_MS`), per-IP concurrent connection caps (`MAX_CONNS_PER_IP`), and global connection ceilings (`GLOBAL_MAX_CONNECTIONS`).
   * **Slowloris / Pre-Auth Protection:** Applies `SO_RCVTIMEO` (`PRE_AUTH_TIMEOUT_MS`) prior to initial packet validation to prevent dead-connection exhaustion.
-* **GeoIP Country Filtering (`GeoGuard`):**
+- **GeoIP Country Filtering (`GeoGuard`):**
   * Integrated with **MaxMindDB (`libmaxminddb`)** using memory-mapped files (`MMDB_MODE_MMAP`) for zero-overhead country lookup via `GeoLite2-Country.mmdb`.
-* **Live Hot-Reloading Configuration:**
+- **Live Hot-Reloading Configuration:**
   * A dedicated background thread (`ConfigWatcherThread`) monitors `config.ini` every 3 seconds, dynamically updating rate limits, debug modes, admin whitelists, and blacklist states in real-time without restarting the server or disconnecting active players.
-* **Low-Latency Socket & Threading Design:**
+- **Low-Latency Socket & Threading Design:**
   * Built with native Win32 Critical Sections (`FastMutex` & RAII `FastGuard`) and atomic operations (`InterlockedIncrement`/`Decrement`).
   * Configured with `TCP_NODELAY` (Nagle's algorithm disabled) and `SO_LINGER` for minimal proxy latency and instant socket recycling.
 
@@ -127,10 +127,10 @@ ADMIN_IP_2=127.0.0.1
 
 ## 🛠️ Tech Stack
 
-* **Language:** C++ (Win32 API)
-* **Networking:** Winsock2 (`ws2_32.lib`), Stateful TCP Proxy Sockets
-* **GeoIP Engine:** MaxMindDB (`libmaxminddb`)
-* **Concurrency:** Multi-threaded Client Handlers, Win32 Critical Sections (RAII)
+- **Language:** C++ (Win32 API)
+- **Networking:** Winsock2 (`ws2_32.lib`), Stateful TCP Proxy Sockets
+- **GeoIP Engine:** MaxMindDB (`libmaxminddb`)
+- **Concurrency:** Multi-threaded Client Handlers, Win32 Critical Sections (RAII)
 
 ---
 
